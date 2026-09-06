@@ -21,13 +21,6 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Textarea} from "@/components/ui/textarea";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -62,9 +55,6 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import {postSchema} from "@/lib/models";
-
-
-
 
 type PostForm = z.infer<typeof postSchema>;
 
@@ -113,28 +103,6 @@ export default function PostEditorPage() {
       setValue("slug", slugify(title ?? ""), {shouldDirty: false});
     }
   }, [title, setValue]);
-
-  // Aperçu de l'image de couverture :
-  // - création : aperçu local du fichier choisi
-  // - édition : image stockée servie par /files/, ou URL externe
-  const coverValue = watch("cover_image_url");
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
-  useEffect(() => {
-    if (coverValue instanceof FileList && coverValue.length > 0) {
-      const url = URL.createObjectURL(coverValue.item(0)!);
-      setLocalPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setLocalPreview(null);
-  }, [coverValue]);
-
-  const coverPreviewSrc =
-    localPreview ??
-    (typeof coverValue === "string" && coverValue
-      ? coverValue.startsWith("http")
-        ? coverValue
-        : `${API_BASE}/files/${coverValue}`
-      : null);
 
   // En édition, pré-remplit le formulaire une fois l'article chargé
   const loadedId = useRef<string | null>(null);
@@ -205,6 +173,28 @@ export default function PostEditorPage() {
     await handleSubmit(onSubmit)();
   }
 
+  // Aperçu de l'image de couverture :
+  // - création : aperçu local du fichier choisi
+  // - édition : image stockée servie par /files/, ou URL externe
+  const coverValue = watch("cover_image_url");
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (coverValue instanceof FileList && coverValue.length > 0) {
+      const url = URL.createObjectURL(coverValue.item(0)!);
+      setLocalPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setLocalPreview(null);
+  }, [coverValue]);
+
+  const coverPreviewSrc =
+    localPreview ??
+    (typeof coverValue === "string" && coverValue
+      ? coverValue.startsWith("http")
+        ? coverValue
+        : `${API_BASE}/files/${coverValue}`
+      : null);
+
   if (isEdit && isLoading) {
     return (
       <div className="space-y-6">
@@ -217,243 +207,249 @@ export default function PostEditorPage() {
     );
   }
 
+  const borderless =
+    "h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent";
+
   return (
-    <div className="space-y-6">
-      <form
-        onSubmit={handleFormSubmit}
-        className="flex flex-col gap-6"
-      >
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Titre</Label>
-                <Input
-                  id="title"
-                  placeholder="Mon superbe article"
-                  {...register("title")}
-                />
-                {errors.title && (
-                  <p className="text-destructive text-xs">
-                    {errors.title.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">/</span>
-                  <Input
-                    id="slug"
-                    placeholder="mon-superbe-article"
-                    {...register("slug", {
-                      onChange: () => {
-                        slugTouched.current = true;
-                      },
-                    })}
-                  />
-                </div>
-                {errors.slug && (
-                  <p className="text-destructive text-xs">
-                    {errors.slug.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="excerpt">Extrait</Label>
-                <Textarea
-                  id="excerpt"
-                  placeholder="Court résumé affiché dans les listes d'articles"
-                  rows={3}
-                  {...register("excerpt")}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Contenu</Label>
-                <div className="border rounded-md overflow-hidden">
-                  <MDXEditor
-                    markdown={post?.content || ""}
-                    onChange={(markdown) => setValue("content", markdown, { shouldDirty: true, shouldValidate: true })}
-                    plugins={[
-                      headingsPlugin(),
-                      listsPlugin(),
-                      quotePlugin(),
-                      thematicBreakPlugin(),
-                      linkPlugin(),
-                      linkDialogPlugin(),
-                      tablePlugin(),
-                      markdownShortcutPlugin(),
-                      imagePlugin({
-                        imageUploadHandler: () => {
-                          return Promise.resolve('https://picsum.photos/200/300')
-                        },
-                        imageAutocompleteSuggestions: ['https://picsum.photos/200/300', 'https://picsum.photos/200']
-                      }),
-                      codeBlockPlugin({ defaultCodeBlockLanguage: "bash" }),
-                      diffSourcePlugin({ viewMode: "rich-text" }),
-                      toolbarPlugin({
-                        toolbarClassName: 'toolbar',
-                        toolbarPosition: 'top',
-                        toolbarContents: () => (
-                          <DiffSourceToggleWrapper>
-                            <div className="flex flex-wrap gap-2 items-center">
-                              <UndoRedo/>
-                              <div className="w-px h-4 bg-border mx-1" />
-                              <BlockTypeSelect />
-                              <BoldItalicUnderlineToggles/>
-                              <div className="w-px h-4 bg-border mx-1" />
-                              <ListsToggle />
-                              <div className="w-px h-4 bg-border mx-1" />
-                              <CreateLink />
-                              <InsertImage />
-                              <InsertTable />
-                              <InsertCodeBlock />
-                            </div>
-                          </DiffSourceToggleWrapper>
-                        )
-                      })
-                    ]}
-                    ref={markdownRef}
-                    className={theme === "dark" ? "dark-theme dark-editor" : ""}
-                    contentEditableClassName="min-h-[400px] p-4 prose prose-sm dark:prose-invert max-w-none"
-                  />
-                </div>
-                {errors.content && (
-                  <p className="text-destructive text-xs">
-                    {errors.content.message}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-              <CardDescription>
-                Optimisez le référencement de l'article
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="seo_title">Titre SEO</Label>
-                <Input
-                  id="seo_title"
-                  placeholder="Titre affiché dans les moteurs de recherche"
-                  {...register("seo_title")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seo_description">Description SEO</Label>
-                <Textarea
-                  id="seo_description"
-                  placeholder="Meta-description de l'article (≈ 160 caractères)"
-                  rows={3}
-                  {...register("seo_description")}
-                />
-              </div>
-            </CardContent>
-          </Card>
+    <div className="mx-auto w-full max-w-3xl">
+      <form onSubmit={handleFormSubmit} className="flex flex-col gap-3">
+        {/* Titre + enregistrement sur la même ligne */}
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <Input
+              id="title"
+              placeholder="Titre de l'article"
+              className={`${borderless} text-3xl font-bold md:text-4xl placeholder:text-muted-foreground/40`}
+              {...register("title")}
+            />
+            {errors.title && (
+              <p className="text-destructive text-xs">
+                {errors.title.message}
+              </p>
+            )}
+          </div>
+          <Button type="submit" className="shrink-0">
+            {saving ? <Loader2 className="animate-spin"/> : <Save/>}
+            {saving
+              ? "Enregistrement…"
+              : isEdit
+                ? "Enregistrer"
+                : "Créer l'article"}
+          </Button>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Publication</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Statut</Label>
-                <Select
-                  value={watch("status")}
-                  onValueChange={(value) =>
-                    setValue("status", value as PostStatus, {
-                      shouldDirty: true,
-                    })
-                  }
-                >
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(statusLabels) as PostStatus[]).map(
-                      (status) => (
-                        <SelectItem key={status} value={status}>
-                          {statusLabels[status]}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Image de couverture, affichée entre le titre et le contenu */}
+        {coverPreviewSrc && (
+          <img
+            src={coverPreviewSrc}
+            alt="Image de couverture de l'article"
+            className="max-h-[32rem] w-full rounded-xl object-contain"
+          />
+        )}
+        {isEdit ? (
+          <Input
+            id="cover_image_url"
+            placeholder="Image de couverture — collez une URL (https://…)"
+            className={`${borderless} text-muted-foreground focus-visible:text-foreground`}
+            {...register("cover_image_url")}
+          />
+        ) : (
+          <Input
+            id="cover_image_url"
+            type="file"
+            accept="image/*"
+            className={`${borderless} text-muted-foreground file:mr-3 file:border-0 file:bg-transparent file:text-sm file:text-muted-foreground file:shadow-none hover:file:text-foreground`}
+            {...register("cover_image_url")}
+          />
+        )}
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select
-                  value={watch("category_id") || "none"}
-                  onValueChange={(value) =>
-                    setValue("category_id", value === "none" ? "" : value, {
-                      shouldDirty: true,
-                    })
-                  }
-                >
-                  <SelectTrigger id="category" className="w-full">
-                    <SelectValue placeholder="Sans catégorie"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sans catégorie</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Panneau de propriétés, comme le frontmatter Obsidian */}
+        <div className="grid gap-x-6 gap-y-1 rounded-lg bg-muted/40 px-4 py-3 sm:grid-cols-2">
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor="slug"
+              className="w-20 shrink-0 text-xs text-muted-foreground"
+            >
+              Slug
+            </Label>
+            <Input
+              id="slug"
+              placeholder="mon-superbe-article"
+              className={`${borderless} text-sm`}
+              {...register("slug", {
+                onChange: () => {
+                  slugTouched.current = true;
+                },
+              })}
+            />
+          </div>
+          {errors.slug && (
+            <p className="text-destructive text-xs sm:col-span-2">
+              {errors.slug.message}
+            </p>
+          )}
 
-              <div className="space-y-2">
-                <Label htmlFor="cover_image_url">
-                  {isEdit ? "Image de couverture (URL)" : "Image de couverture"}
-                </Label>
-                {isEdit ? (
-                  <Input
-                    id="cover_image_url"
-                    placeholder="https://…"
-                    {...register("cover_image_url")}
-                  />
-                ) : (
-                  <Input
-                    id="cover_image_url"
-                    type="file"
-                    accept="image/*"
-                    {...register("cover_image_url")}
-                  />
+          <div className="flex items-center gap-2">
+            <Label className="w-20 shrink-0 text-xs text-muted-foreground">
+              Statut
+            </Label>
+            <Select
+              value={watch("status")}
+              onValueChange={(value) =>
+                setValue("status", value as PostStatus, {
+                  shouldDirty: true,
+                })
+              }
+            >
+              <SelectTrigger
+                id="status"
+                className="h-8 w-full border-0 bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0"
+              >
+                <SelectValue/>
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(statusLabels) as PostStatus[]).map(
+                  (status) => (
+                    <SelectItem key={status} value={status}>
+                      {statusLabels[status]}
+                    </SelectItem>
+                  )
                 )}
-                {coverPreviewSrc && (
-                  <img
-                    src={coverPreviewSrc}
-                    alt="Aperçu de l'image de couverture"
-                    className="max-h-48 w-auto rounded-md border object-cover"
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div className="flex flex-col gap-2">
-            <Button type="submit">
-              {saving ? <Loader2 className="animate-spin"/> : <Save/>}
-              {saving
-                ? "Enregistrement…"
-                : isEdit
-                  ? "Enregistrer les modifications"
-                  : "Créer l'article"}
-            </Button>
+          <div className="flex items-center gap-2">
+            <Label className="w-20 shrink-0 text-xs text-muted-foreground">
+              Catégorie
+            </Label>
+            <Select
+              value={watch("category_id") || "none"}
+              onValueChange={(value) =>
+                setValue("category_id", value === "none" ? "" : value, {
+                  shouldDirty: true,
+                })
+              }
+            >
+              <SelectTrigger
+                id="category"
+                className="h-8 w-full border-0 bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0"
+              >
+                <SelectValue placeholder="Sans catégorie"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sans catégorie</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+
+        {/* Extrait */}
+        <Textarea
+          id="excerpt"
+          placeholder="Extrait — court résumé affiché dans les listes d'articles"
+          rows={2}
+          className="resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+          {...register("excerpt")}
+        />
+
+        {/* Contenu */}
+        <div>
+          <MDXEditor
+            markdown={post?.content || ""}
+            onChange={(markdown) => setValue("content", markdown, { shouldDirty: true, shouldValidate: true })}
+            plugins={[
+              headingsPlugin(),
+              listsPlugin(),
+              quotePlugin(),
+              thematicBreakPlugin(),
+              linkPlugin(),
+              linkDialogPlugin(),
+              tablePlugin(),
+              markdownShortcutPlugin(),
+              imagePlugin({
+                imageUploadHandler: () => {
+                  return Promise.resolve('https://picsum.photos/200/300')
+                },
+                imageAutocompleteSuggestions: ['https://picsum.photos/200/300', 'https://picsum.photos/200']
+              }),
+              codeBlockPlugin({ defaultCodeBlockLanguage: "bash" }),
+              diffSourcePlugin({ viewMode: "rich-text" }),
+              toolbarPlugin({
+                toolbarClassName: 'toolbar',
+                toolbarPosition: 'top',
+                toolbarContents: () => (
+                  <DiffSourceToggleWrapper>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <UndoRedo/>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <BlockTypeSelect />
+                      <BoldItalicUnderlineToggles/>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <ListsToggle />
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <CreateLink />
+                      <InsertImage />
+                      <InsertTable />
+                      <InsertCodeBlock />
+                    </div>
+                  </DiffSourceToggleWrapper>
+                )
+              })
+            ]}
+            ref={markdownRef}
+            className={theme === "dark" ? "dark-theme dark-editor" : ""}
+            contentEditableClassName="min-h-[400px] p-4 prose prose-sm dark:prose-invert max-w-none"
+          />
+          {errors.content && (
+            <p className="text-destructive text-xs">
+              {errors.content.message}
+            </p>
+          )}
+        </div>
+
+        {/* SEO, replié par défaut */}
+        <details className="rounded-lg bg-muted/40 px-4 py-3">
+          <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground">
+            SEO
+          </summary>
+          <div className="mt-3 space-y-3">
+            <div className="space-y-1">
+              <Label
+                htmlFor="seo_title"
+                className="text-xs text-muted-foreground"
+              >
+                Titre SEO
+              </Label>
+              <Input
+                id="seo_title"
+                placeholder="Titre affiché dans les moteurs de recherche"
+                className={borderless}
+                {...register("seo_title")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label
+                htmlFor="seo_description"
+                className="text-xs text-muted-foreground"
+              >
+                Description SEO
+              </Label>
+              <Textarea
+                id="seo_description"
+                placeholder="Meta-description de l'article (≈ 160 caractères)"
+                rows={2}
+                className="resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                {...register("seo_description")}
+              />
+            </div>
+          </div>
+        </details>
       </form>
     </div>
   );
