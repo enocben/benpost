@@ -36,12 +36,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {categorySchema} from "@/lib/models";
 
-const categorySchema = z.object({
-  name: z.string().min(2, "2 caractères minimum").max(100),
-  slug: z.string().min(2, "2 caractères minimum").max(100),
-  description: z.string().optional(),
-});
 
 type CategoryForm = z.infer<typeof categorySchema>;
 

@@ -30,11 +30,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {tagSchema} from "@/lib/models";
 
-const tagSchema = z.object({
-  name: z.string().min(2, "2 caractères minimum").max(50),
-  slug: z.string().min(2, "2 caractères minimum").max(50),
-});
+
 
 type TagForm = z.infer<typeof tagSchema>;
 
