@@ -26,12 +26,20 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const headers: Record<string, string> = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  let payload: BodyInit | undefined;
+  if (body instanceof FormData) {
+    // Le navigateur définit lui-même le Content-Type multipart avec boundary
+    payload = body;
+  } else {
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    payload = body !== undefined ? JSON.stringify(body) : undefined;
+  }
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: payload,
   });
 
   if (res.status === 401) {

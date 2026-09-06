@@ -58,3 +58,8 @@ export interface PostInput {
   seo_title?: string;
   seo_description?: string;
 }
+
+// À la création, l'API attend l'image de couverture en upload (multipart)
+export interface PostCreateInput extends Omit<PostInput, "cover_image_url"> {
+  cover_image_url?: File;
+}

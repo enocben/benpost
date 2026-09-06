@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth";
 import { categoriesRoutes } from "./routes/categories";
 import { tagsRoutes } from "./routes/tags";
 import { usersRoutes } from "./routes/users";
+import { filesRoutes } from "./routes/files";
 
 export const app = new Elysia()
   .use(
@@ -19,6 +20,7 @@ export const app = new Elysia()
   .use(categoriesRoutes)
   .use(tagsRoutes)
   .use(usersRoutes)
+  .use(filesRoutes)
   .get("/", () => "Hello Benpost API");
 
 if (import.meta.main) {

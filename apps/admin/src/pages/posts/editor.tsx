@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useTheme} from "@/lib/theme";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import {Link, useNavigate, useParams} from "react-router";
 import {ArrowLeft, Loader2, Save} from "lucide-react";
 
 import {slugify} from "@/lib/utils";
+import {API_BASE} from "@/lib/api";
 import {
   useCategories,
   useCreatePost,
@@ -114,6 +115,28 @@ export default function PostEditorPage() {
     }
   }, [title, setValue]);
 
+  // Aperçu de l'image de couverture :
+  // - création : aperçu local du fichier choisi
+  // - édition : image stockée servie par /files/, ou URL externe
+  const coverValue = watch("cover_image_url");
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (coverValue instanceof FileList && coverValue.length > 0) {
+      const url = URL.createObjectURL(coverValue.item(0)!);
+      setLocalPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setLocalPreview(null);
+  }, [coverValue]);
+
+  const coverPreviewSrc =
+    localPreview ??
+    (typeof coverValue === "string" && coverValue
+      ? coverValue.startsWith("http")
+        ? coverValue
+        : `${API_BASE}/files/${coverValue}`
+      : null);
+
   // En édition, pré-remplit le formulaire une fois l'article chargé
   const loadedId = useRef<string | null>(null);
   useEffect(() => {
@@ -138,21 +161,39 @@ export default function PostEditorPage() {
   }, [post, reset]);
 
   function onSubmit(values: PostForm) {
-    const input = {
-      ...values,
+    const {cover_image_url, ...rest} = values;
+    const optional = {
       category_id: values.category_id || undefined,
-      cover_image_url: values.cover_image_url || undefined,
       excerpt: values.excerpt || undefined,
       seo_title: values.seo_title || undefined,
       seo_description: values.seo_description || undefined,
     };
     if (isEdit && id) {
+      // L'édition conserve une URL d'image (l'API PUT accepte une string)
       updatePost.mutate(
-        {id, input},
+        {
+          id,
+          input: {
+            ...rest,
+            ...optional,
+            cover_image_url:
+              typeof cover_image_url === "string" && cover_image_url
+                ? cover_image_url
+                : undefined,
+          },
+        },
         {onSuccess: () => navigate("/posts")}
       );
     } else {
-      createPost.mutate(input, {onSuccess: () => navigate("/posts")});
+      // La création envoie l'image de couverture comme fichier (multipart)
+      const coverFile =
+        cover_image_url instanceof FileList
+          ? cover_image_url.item(0) ?? undefined
+          : undefined;
+      createPost.mutate(
+        {...rest, ...optional, cover_image_url: coverFile},
+        {onSuccess: () => navigate("/posts")}
+      );
     }
   }
 
@@ -398,12 +439,30 @@ export default function PostEditorPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cover_image_url">Image de couverture (URL)</Label>
-                <Input
-                  id="cover_image_url"
-                  placeholder="https://…"
-                  {...register("cover_image_url")}
-                />
+                <Label htmlFor="cover_image_url">
+                  {isEdit ? "Image de couverture (URL)" : "Image de couverture"}
+                </Label>
+                {isEdit ? (
+                  <Input
+                    id="cover_image_url"
+                    placeholder="https://…"
+                    {...register("cover_image_url")}
+                  />
+                ) : (
+                  <Input
+                    id="cover_image_url"
+                    type="file"
+                    accept="image/*"
+                    {...register("cover_image_url")}
+                  />
+                )}
+                {coverPreviewSrc && (
+                  <img
+                    src={coverPreviewSrc}
+                    alt="Aperçu de l'image de couverture"
+                    className="max-h-48 w-auto rounded-md border object-cover"
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

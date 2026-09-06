@@ -13,7 +13,8 @@ export const postSchema = z.object({
   content: z.string().min(10, "10 caractères minimum"),
   status: z.enum(["draft", "published", "archived"]),
   category_id: z.string().optional(),
-  cover_image_url: z.string().optional(),
+  // Création : fichier uploadé (FileList via input file) ; édition : URL existante
+  cover_image_url: z.union([z.instanceof(FileList), z.string()]).optional(),
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
 });

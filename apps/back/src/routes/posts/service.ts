@@ -4,6 +4,7 @@ import { postSchema, userSchema, categorySchema } from "../../database/schema";
 import {eq} from "drizzle-orm";
 import { RouteResponse } from "../../utils/reponses";
 import { type PostModel } from './model'
+import {s3, S3Files} from "../../utils/s3";
 
 export abstract class PostService {
   static async getAll() {
@@ -58,6 +59,12 @@ export abstract class PostService {
     if (existing.length > 0) {
       throw status(400, "Post with this slug already exists");
     }
+    let coverImage: string | undefined
+
+    if (data.cover_image_url){
+      const image = await S3Files.uploadCoverImage(data.cover_image_url)
+      coverImage = image.name
+    }
 
     const now = new Date().toISOString();
     const newPost = {
@@ -66,7 +73,7 @@ export abstract class PostService {
       slug: data.slug,
       excerpt: data.excerpt || null,
       content: data.content,
-      cover_image_url: data.cover_image_url || null,
+      cover_image_url: coverImage,
       status: data.status || "draft",
       author_id: authorId,
       category_id: data.category_id || null,

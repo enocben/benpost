@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import type {
   Category,
   Post,
+  PostCreateInput,
   PostInput,
   PostListItem,
   PostStatus,
@@ -68,10 +69,21 @@ export function useUsers() {
 // POSTS
 // ----------------------
 
+// La création attend du multipart/form-data (l'image de couverture est un fichier)
+function toFormData(input: PostCreateInput): FormData {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined || value === "") continue;
+    form.append(key, value as string | File);
+  }
+  return form;
+}
+
 export function useCreatePost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: PostInput) => api.post<Post>("/posts", input),
+    mutationFn: (input: PostCreateInput) =>
+      api.post<Post>("/posts", toFormData(input)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.posts });
       toast.success("Article créé avec succès");

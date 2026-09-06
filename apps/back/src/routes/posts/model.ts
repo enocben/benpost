@@ -6,7 +6,7 @@ export const PostModel = {
     slug: t.String({ minLength: 2, maxLength: 200 }),
     excerpt: t.Optional(t.String()),
     content: t.String({ minLength: 10 }),
-    cover_image_url: t.Optional(t.String()),
+    cover_image_url: t.Optional(t.File({ format: 'image/*', maxSize: '10m'})),
     status: t.Optional(t.Union([t.Literal("draft"), t.Literal("published"), t.Literal("archived")])),
     category_id: t.Optional(t.String()),
     seo_title: t.Optional(t.String()),
