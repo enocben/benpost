@@ -3,8 +3,8 @@ import {useTheme} from "@/lib/theme";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
-import {Link, useNavigate, useParams} from "react-router";
-import {ArrowLeft, Loader2, Save} from "lucide-react";
+import {useNavigate, useParams} from "react-router";
+import {Loader2, Save} from "lucide-react";
 
 import {slugify} from "@/lib/utils";
 import {API_BASE} from "@/lib/api";
@@ -16,7 +16,6 @@ import {
   statusLabels,
 } from "@/hooks/api";
 import type {PostStatus} from "@/types";
-import {PageHeader} from "@/components/page-header";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
@@ -220,35 +219,12 @@ export default function PostEditorPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={isEdit ? "Modifier l'article" : "Nouvel article"}
-        description={
-          isEdit
-            ? "Les modifications sont enregistrées via l'API Benpost"
-            : "Rédigez un nouvel article pour votre blog"
-        }
-        actions={
-          <Button variant="outline" asChild>
-            <Link to="/posts">
-              <ArrowLeft/>
-              Retour
-            </Link>
-          </Button>
-        }
-      />
-
       <form
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-6"
       >
         <div className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Contenu</CardTitle>
-              <CardDescription>
-                Le corps de l'article, en Markdown
-              </CardDescription>
-            </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Titre</Label>
