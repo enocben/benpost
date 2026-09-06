@@ -6,6 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun --filter '*' dev"
+    "devOk": "concurrently \"bun --filter admin dev\" \"bun --filter front dev\" \"bun --filter back dev\"",
+    "dev": "concurrently \"bun --filter admin dev\" \"bun --filter back dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
