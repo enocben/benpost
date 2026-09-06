@@ -1,21 +1,11 @@
 {
-  "name": "back",
-  "version": "1.0.50",
+  "name": "benpost",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts",
-    "db:generate": "bunx drizzle-kit generate",
-    "db:migrate": "bun run src/database/db.ts"
-  },
-  "dependencies": {
-    "@elysia/jwt": "^1.4.2",
-    "@elysia/openapi": "^1.4.16",
-    "drizzle-orm": "^0.45.2",
-    "elysia": "latest"
-  },
-  "devDependencies": {
-    "bun-types": "latest",
-    "drizzle-kit": "^0.31.10"
-  },
-  "module": "src/index.js"
+    "dev": "bun --filter '*' dev"
+  }
 }
