@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Link, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import {useEffect, useRef} from "react";
+import {useTheme} from "@/lib/theme";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {z} from "zod";
+import {Link, useNavigate, useParams} from "react-router";
+import {ArrowLeft, Loader2, Save} from "lucide-react";
 
-import { slugify } from "@/lib/utils";
+import {slugify} from "@/lib/utils";
 import {
   useCategories,
   useCreatePost,
@@ -13,12 +14,12 @@ import {
   useUpdatePost,
   statusLabels,
 } from "@/hooks/api";
-import type { PostStatus } from "@/types";
-import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import type {PostStatus} from "@/types";
+import {PageHeader} from "@/components/page-header";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Textarea} from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -33,7 +34,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import {Skeleton} from "@/components/ui/skeleton";
+import {
+  MDXEditor,
+  headingsPlugin,
+  type MDXEditorMethods,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  linkDialogPlugin,
+  imagePlugin,
+  linkPlugin,
+  tablePlugin,
+  markdownShortcutPlugin,
+  BlockTypeSelect,
+  CreateLink,
+  InsertImage,
+  InsertTable,
+  ListsToggle,
+  codeBlockPlugin,
+  InsertCodeBlock,
+  ConditionalContents,
+  ChangeCodeMirrorLanguage,
+  diffSourcePlugin,
+  DiffSourceToggleWrapper,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+
 
 const postSchema = z.object({
   title: z
@@ -68,12 +98,14 @@ const emptyForm: PostForm = {
 };
 
 export default function PostEditorPage() {
-  const { id } = useParams<{ id: string }>();
+  const {id} = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const markdownRef = useRef<MDXEditorMethods>(null)
+  const { theme } = useTheme();
 
-  const { data: categories = [] } = useCategories();
-  const { data: post, isLoading } = usePost(id);
+  const {data: categories = []} = useCategories();
+  const {data: post, isLoading} = usePost(id);
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
   const saving = createPost.isPending || updatePost.isPending;
@@ -84,7 +116,7 @@ export default function PostEditorPage() {
     watch,
     setValue,
     reset,
-    formState: { errors, isDirty },
+    formState: {errors, isDirty},
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
     defaultValues: emptyForm,
@@ -95,7 +127,7 @@ export default function PostEditorPage() {
   const title = watch("title");
   useEffect(() => {
     if (!slugTouched.current) {
-      setValue("slug", slugify(title ?? ""), { shouldDirty: false });
+      setValue("slug", slugify(title ?? ""), {shouldDirty: false});
     }
   }, [title, setValue]);
 
@@ -116,6 +148,9 @@ export default function PostEditorPage() {
         seo_title: post.seo_title ?? "",
         seo_description: post.seo_description ?? "",
       });
+      setTimeout(() => {
+        markdownRef.current?.setMarkdown(post.content);
+      }, 0);
     }
   }, [post, reset]);
 
@@ -130,21 +165,30 @@ export default function PostEditorPage() {
     };
     if (isEdit && id) {
       updatePost.mutate(
-        { id, input },
-        { onSuccess: () => navigate("/posts") }
+        {id, input},
+        {onSuccess: () => navigate("/posts")}
       );
     } else {
-      createPost.mutate(input, { onSuccess: () => navigate("/posts") });
+      createPost.mutate(input, {onSuccess: () => navigate("/posts")});
     }
+  }
+
+  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // Synchroniser le contenu de l'éditeur vers le formulaire AVANT la validation
+    const content = markdownRef.current?.getMarkdown() ?? "";
+    setValue("content", content, { shouldValidate: true, shouldDirty: true });
+    // Déclencher la validation + soumission
+    await handleSubmit(onSubmit)();
   }
 
   if (isEdit && isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
+        <Skeleton className="h-8 w-64"/>
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-96 w-full"/>
+          <Skeleton className="h-64 w-full"/>
         </div>
       </div>
     );
@@ -162,7 +206,7 @@ export default function PostEditorPage() {
         actions={
           <Button variant="outline" asChild>
             <Link to="/posts">
-              <ArrowLeft />
+              <ArrowLeft/>
               Retour
             </Link>
           </Button>
@@ -170,8 +214,8 @@ export default function PostEditorPage() {
       />
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="grid items-start gap-6 lg:grid-cols-[1fr_320px]"
+        onSubmit={handleFormSubmit}
+        className="flex flex-col gap-6"
       >
         <div className="space-y-6">
           <Card>
@@ -229,13 +273,54 @@ export default function PostEditorPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="content">Contenu</Label>
-                <Textarea
-                  id="content"
-                  placeholder="# Titre&#10;&#10;Écrivez votre article en Markdown…"
-                  rows={16}
-                  className="font-mono text-sm"
-                  {...register("content")}
-                />
+                <div className="border rounded-md overflow-hidden">
+                  <MDXEditor
+                    markdown={post?.content || ""}
+                    onChange={(markdown) => setValue("content", markdown, { shouldDirty: true, shouldValidate: true })}
+                    plugins={[
+                      headingsPlugin(),
+                      listsPlugin(),
+                      quotePlugin(),
+                      thematicBreakPlugin(),
+                      linkPlugin(),
+                      linkDialogPlugin(),
+                      tablePlugin(),
+                      markdownShortcutPlugin(),
+                      imagePlugin({
+                        imageUploadHandler: () => {
+                          return Promise.resolve('https://picsum.photos/200/300')
+                        },
+                        imageAutocompleteSuggestions: ['https://picsum.photos/200/300', 'https://picsum.photos/200']
+                      }),
+                      codeBlockPlugin({ defaultCodeBlockLanguage: "bash" }),
+                      diffSourcePlugin({ viewMode: "rich-text" }),
+                      toolbarPlugin({
+                        toolbarClassName: 'toolbar',
+                        toolbarPosition: 'top',
+                        toolbarContents: () => (
+                          <DiffSourceToggleWrapper>
+                            <div className="flex flex-wrap gap-2 items-center">
+                              <UndoRedo/>
+                              <div className="w-px h-4 bg-border mx-1" />
+                              <BlockTypeSelect />
+                              <BoldItalicUnderlineToggles/>
+                              <div className="w-px h-4 bg-border mx-1" />
+                              <ListsToggle />
+                              <div className="w-px h-4 bg-border mx-1" />
+                              <CreateLink />
+                              <InsertImage />
+                              <InsertTable />
+                              <InsertCodeBlock />
+                            </div>
+                          </DiffSourceToggleWrapper>
+                        )
+                      })
+                    ]}
+                    ref={markdownRef}
+                    className={theme === "dark" ? "dark-theme dark-editor" : ""}
+                    contentEditableClassName="min-h-[400px] p-4 prose prose-sm dark:prose-invert max-w-none"
+                  />
+                </div>
                 {errors.content && (
                   <p className="text-destructive text-xs">
                     {errors.content.message}
@@ -291,7 +376,7 @@ export default function PostEditorPage() {
                   }
                 >
                   <SelectTrigger id="status" className="w-full">
-                    <SelectValue />
+                    <SelectValue/>
                   </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(statusLabels) as PostStatus[]).map(
@@ -316,7 +401,7 @@ export default function PostEditorPage() {
                   }
                 >
                   <SelectTrigger id="category" className="w-full">
-                    <SelectValue placeholder="Sans catégorie" />
+                    <SelectValue placeholder="Sans catégorie"/>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sans catégorie</SelectItem>
@@ -341,19 +426,14 @@ export default function PostEditorPage() {
           </Card>
 
           <div className="flex flex-col gap-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : <Save />}
+            <Button type="submit">
+              {saving ? <Loader2 className="animate-spin"/> : <Save/>}
               {saving
                 ? "Enregistrement…"
                 : isEdit
                   ? "Enregistrer les modifications"
                   : "Créer l'article"}
             </Button>
-            {isEdit && !isDirty && (
-              <p className="text-muted-foreground text-center text-xs">
-                Aucune modification non enregistrée
-              </p>
-            )}
           </div>
         </div>
       </form>
