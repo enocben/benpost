@@ -1,4 +1,4 @@
-import { t } from "elysia";
+import {t, UnwrapSchema} from "elysia";
 
 export const PostModel = {
   create: t.Object({
@@ -24,3 +24,7 @@ export const PostModel = {
     seo_description: t.Optional(t.String()),
   }),
 };
+
+export type PostModel = {
+	[k in keyof typeof PostModel]: UnwrapSchema<typeof PostModel[k]>
+}

@@ -72,8 +72,8 @@ export function useCreatePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: PostInput) => api.post<Post>("/posts", input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.posts });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.posts });
       toast.success("Article créé avec succès");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -85,9 +85,9 @@ export function useUpdatePost() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<PostInput> }) =>
       api.put<Post>(`/posts/${id}`, input),
-    onSuccess: (post) => {
-      queryClient.invalidateQueries({ queryKey: keys.posts });
-      queryClient.invalidateQueries({ queryKey: keys.post(post.id) });
+    onSuccess: async (post) => {
+      await queryClient.invalidateQueries({ queryKey: keys.posts });
+      await queryClient.invalidateQueries({ queryKey: keys.post(post.id) });
       toast.success("Article mis à jour");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -98,8 +98,8 @@ export function useDeletePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.del(`/posts/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.posts });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.posts });
       toast.success("Article supprimé");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -115,8 +115,8 @@ export function useCreateCategory() {
   return useMutation({
     mutationFn: (input: { name: string; slug: string; description?: string }) =>
       api.post<Category>("/categories", input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.categories });
+    onSuccess: async() => {
+      await queryClient.invalidateQueries({ queryKey: keys.categories });
       toast.success("Catégorie créée");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -133,8 +133,8 @@ export function useUpdateCategory() {
       id: string;
       input: { name?: string; slug?: string; description?: string };
     }) => api.put<Category>(`/categories/${id}`, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.categories });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.categories });
       toast.success("Catégorie mise à jour");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -145,8 +145,8 @@ export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.del(`/categories/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.categories });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.categories });
       toast.success("Catégorie supprimée");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -162,8 +162,8 @@ export function useCreateTag() {
   return useMutation({
     mutationFn: (input: { name: string; slug: string }) =>
       api.post<Tag>("/tags", input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.tags });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.tags });
       toast.success("Tag créé");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -180,8 +180,8 @@ export function useUpdateTag() {
       id: string;
       input: { name?: string; slug?: string };
     }) => api.put<Tag>(`/tags/${id}`, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.tags });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.tags });
       toast.success("Tag mis à jour");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -192,8 +192,8 @@ export function useDeleteTag() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.del(`/tags/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.tags });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.tags });
       toast.success("Tag supprimé");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -209,8 +209,8 @@ export function useUpdateUserRole() {
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: Role }) =>
       api.put<User>(`/users/${id}/role`, { role }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.users });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.users });
       toast.success("Rôle mis à jour");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -221,8 +221,8 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.del(`/users/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.users });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.users });
       toast.success("Utilisateur supprimé");
     },
     onError: (error: Error) => toast.error(error.message),

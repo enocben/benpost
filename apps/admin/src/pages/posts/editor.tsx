@@ -1,4 +1,4 @@
-import {useEffect, useRef} from "react";
+import React, {useEffect, useRef} from "react";
 import {useTheme} from "@/lib/theme";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -57,31 +57,14 @@ import {
   ListsToggle,
   codeBlockPlugin,
   InsertCodeBlock,
-  ConditionalContents,
-  ChangeCodeMirrorLanguage,
   diffSourcePlugin,
   DiffSourceToggleWrapper,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
+import {postSchema} from "@/lib/models";
 
 
-const postSchema = z.object({
-  title: z
-    .string()
-    .min(2, "2 caractères minimum")
-    .max(200, "200 caractères maximum"),
-  slug: z
-    .string()
-    .min(2, "2 caractères minimum")
-    .max(200, "200 caractères maximum"),
-  excerpt: z.string().optional(),
-  content: z.string().min(10, "10 caractères minimum"),
-  status: z.enum(["draft", "published", "archived"]),
-  category_id: z.string().optional(),
-  cover_image_url: z.string().optional(),
-  seo_title: z.string().optional(),
-  seo_description: z.string().optional(),
-});
+
 
 type PostForm = z.infer<typeof postSchema>;
 
@@ -173,7 +156,7 @@ export default function PostEditorPage() {
     }
   }
 
-  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleFormSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     // Synchroniser le contenu de l'éditeur vers le formulaire AVANT la validation
     const content = markdownRef.current?.getMarkdown() ?? "";

@@ -57,7 +57,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   // L'API enveloppe ses réponses dans { success, message, data }
   if (parsed && typeof parsed === "object" && "success" in (parsed as object)) {
     const envelope = parsed as { success: boolean; message: string; data: T };
-    if (envelope.success === false) {
+    if (!envelope.success) {
       throw new ApiError(envelope.message || "Erreur inattendue", res.status);
     }
     return envelope.data;

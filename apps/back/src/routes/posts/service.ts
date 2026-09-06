@@ -1,8 +1,9 @@
 import { status } from "elysia";
 import { db } from "../../database/db";
 import { postSchema, userSchema, categorySchema } from "../../database/schema";
-import { eq } from "drizzle-orm";
+import {eq} from "drizzle-orm";
 import { RouteResponse } from "../../utils/reponses";
+import { type PostModel } from './model'
 
 export abstract class PostService {
   static async getAll() {
@@ -47,7 +48,7 @@ export abstract class PostService {
     return RouteResponse.success("Post retrieved successfully", posts[0]);
   }
 
-  static async create(data: any, authorId: string) {
+  static async create(data: PostModel["create"], authorId: string) {
     const existing = await db
       .select()
       .from(postSchema)
@@ -80,7 +81,8 @@ export abstract class PostService {
     return status(201, RouteResponse.success("Post created successfully", newPost));
   }
 
-  static async update(id: string, data: any) {
+  static async update(id: string, data: PostModel['update']) {
+
     if (data.slug) {
       const existing = await db
         .select()
@@ -95,6 +97,7 @@ export abstract class PostService {
 
     const updateData = {
       ...data,
+      published_at: undefined as string | undefined,
       updated_at: new Date().toISOString(),
     };
 
