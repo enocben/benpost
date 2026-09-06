@@ -8,6 +8,7 @@
     "db:migrate": "bun run src/database/db.ts"
   },
   "dependencies": {
+    "@elysia/jwt": "^1.4.2",
     "@elysia/openapi": "^1.4.16",
     "drizzle-orm": "^0.45.2",
     "elysia": "latest"
