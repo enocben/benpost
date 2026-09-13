@@ -14,6 +14,14 @@ const blog = defineCollection({
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
+			// Champs ajoutés pour les posts synchronisés depuis la DB benpost
+			coverImageUrl: z.string().optional(),
+			benpostId: z.string().optional(),
+			benpostSlug: z.string().optional(),
+			status: z.enum(['draft', 'published', 'archived']).optional(),
+			author: z.string().optional(),
+			category: z.string().optional(),
+			tags: z.array(z.string()).optional(),
 		}),
 });
 

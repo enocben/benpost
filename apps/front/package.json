@@ -9,7 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "sync:content": "bun run scripts/sync-content.ts",
+    "prebuild": "bun run sync:content || true"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.0.0",

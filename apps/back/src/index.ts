@@ -24,7 +24,8 @@ export const app = new Elysia()
   .get("/", () => "Hello Benpost API");
 
 if (import.meta.main) {
-  app.listen(3000);
+  const port = Number(process.env.PORT ?? process.env.BACK_PORT ?? 3000);
+  app.listen(port);
   console.log(
     `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
   );

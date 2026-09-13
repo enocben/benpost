@@ -5,6 +5,7 @@ import {eq} from "drizzle-orm";
 import { RouteResponse } from "../../utils/reponses";
 import { type PostModel } from './model'
 import {S3Files} from "../../utils/s3";
+import { syncPostToFront, deletePostFromFront } from "../../utils/sync-front";
 
 export abstract class PostService {
   static async getAll() {
@@ -85,6 +86,27 @@ export abstract class PostService {
     };
 
     await db.insert(postSchema).values(newPost);
+    // Fire-and-forget : génère le .md statique si publié (n'échoue pas la requête si la synchro échoue)
+    if (newPost.status === "published") {
+      const author = await db.select({ name: userSchema.name, email: userSchema.email }).from(userSchema).where(eq(userSchema.id, authorId)).limit(1);
+      const category = newPost.category_id ? await db.select({ name: categorySchema.name }).from(categorySchema).where(eq(categorySchema.id, newPost.category_id)).limit(1) : [];
+      syncPostToFront({
+        id: newPost.id,
+        title: newPost.title,
+        slug: newPost.slug,
+        excerpt: newPost.excerpt,
+        content: newPost.content,
+        cover_image_url: newPost.cover_image_url,
+        status: newPost.status,
+        author_name: author[0]?.name ?? null,
+        author_email: author[0]?.email ?? null,
+        category_name: category[0]?.name ?? null,
+        seo_description: newPost.seo_description,
+        published_at: newPost.published_at,
+        created_at: newPost.created_at,
+        updated_at: newPost.updated_at ?? null,
+      }).catch((e) => console.warn("[posts] syncPostToFront failed:", (e as Error).message));
+    }
     return status(201, RouteResponse.success("Post created successfully", newPost));
   }
 
@@ -141,6 +163,35 @@ export abstract class PostService {
       throw status(404, "Post not found");
     }
 
+    const updated = result[0] as typeof result[0] & { status: string; slug: string };
+    // Synchro front : upsert si publié, delete si dépublié/archivé
+    // On fetch l'auteur/catégorie pour enrichir le frontmatter
+    const author = updated.author_id ? await db.select({ name: userSchema.name, email: userSchema.email }).from(userSchema).where(eq(userSchema.id, updated.author_id)).limit(1) : [];
+    const category = (updated as any).category_id ? await db.select({ name: categorySchema.name }).from(categorySchema).where(eq(categorySchema.id, (updated as any).category_id)).limit(1) : [];
+    if (updated.status === "published") {
+      syncPostToFront({
+        id: updated.id,
+        title: (updated as any).title,
+        slug: (updated as any).slug,
+        excerpt: (updated as any).excerpt ?? null,
+        content: (updated as any).content,
+        cover_image_url: (updated as any).cover_image_url ?? null,
+        status: updated.status,
+        author_name: author[0]?.name ?? null,
+        author_email: author[0]?.email ?? null,
+        category_name: category[0]?.name ?? null,
+        seo_description: (updated as any).seo_description ?? null,
+        published_at: (updated as any).published_at ?? null,
+        created_at: (updated as any).created_at,
+        updated_at: (updated as any).updated_at ?? null,
+      }).catch((e) => console.warn("[posts] syncPostToFront failed:", (e as Error).message));
+    } else if (data.status && data.status !== "published") {
+      // dépublication explicite (draft/archived)
+      deletePostFromFront({ id: updated.id, slug: (updated as any).slug }).catch((e) => console.warn("[posts] deletePostFromFront failed:", (e as Error).message));
+    } else if (updated.status !== "published") {
+      // cas où le post était déjà non publié et on l'édite : pas de synchro
+    }
+
     return RouteResponse.success("Post updated successfully", result[0]);
   }
 
@@ -149,6 +200,8 @@ export abstract class PostService {
     if (result.length === 0) {
       throw status(404, "Post not found");
     }
+    const deleted = result[0] as { id: string; slug: string };
+    deletePostFromFront({ id: deleted.id, slug: deleted.slug }).catch((e) => console.warn("[posts] deletePostFromFront failed:", (e as Error).message));
     return RouteResponse.success("Post deleted successfully", result[0]);
   }
 }

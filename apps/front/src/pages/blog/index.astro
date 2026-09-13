@@ -99,6 +99,9 @@ const posts = (await getCollection('blog')).sort(
 									{post.data.heroImage && (
 										<Image width={720} height={360} src={post.data.heroImage} alt="" />
 									)}
+									{!post.data.heroImage && (post.data as any).coverImageUrl && (
+										<img width={720} height={360} src={(post.data as any).coverImageUrl} alt={post.data.title} loading="lazy" style="border-radius:12px;max-width:100%;height:auto;" />
+									)}
 									<h4 class="title">{post.data.title}</h4>
 									<p class="date">
 										<FormattedDate date={post.data.pubDate} />

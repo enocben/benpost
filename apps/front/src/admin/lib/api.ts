@@ -1,7 +1,7 @@
 import { clearSession, getToken } from "./auth";
 
 export const API_BASE =
-  (import.meta as any).env?.PUBLIC_API_URL ?? (import.meta as any).env?.API_URL ?? "http://localhost:3000";
+  (import.meta as any).env?.PUBLIC_API_URL ?? (import.meta as any).env?.API_URL ?? "http://localhost:3002";
 
 export class ApiError extends Error {
   status: number;
