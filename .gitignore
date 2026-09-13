@@ -4,6 +4,7 @@ node_modules
 # output
 out
 dist
+apps/front/src/content/**/*.md
 *.tgz
 
 # code coverage
