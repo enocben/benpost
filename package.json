@@ -6,8 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"bun --filter back dev\" \"bun --filter front dev\"",
-    "build": "bun --filter back run build && bun --filter front run build"
+    "dev": "concurrently \"bun --filter=back run dev\" \"bun --filter=front run dev\"",
+    "build": "bun --filter=front run build"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"
