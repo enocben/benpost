@@ -38,11 +38,26 @@ function escapeYaml(str: string): string {
   return str.replace(/'/g, "''");
 }
 
+function resolveCoverUrl(cover: string | null | undefined): string | undefined {
+  if (!cover) return undefined;
+  if (cover.startsWith('http://') || cover.startsWith('https://') || cover.startsWith('//')) return cover;
+  // clé S3 "cover/xxx.jpg" → URL absolue vers le back (/files/cover/...)
+  if (cover.startsWith('cover/')) {
+    const base =
+      process.env.BACK_PUBLIC_URL ||
+      process.env.PUBLIC_API_URL ||
+      process.env.API_URL ||
+      `http://localhost:${process.env.PORT || process.env.BACK_PORT || '3002'}`;
+    return `${base.replace(/\/$/, '')}/files/${cover}`;
+  }
+  return cover;
+}
+
 function toMarkdown(post: PostForFront): string {
   const description = post.excerpt || post.seo_description || post.title;
   const pubDate = post.published_at || post.created_at;
   const updatedDate = post.updated_at && post.updated_at !== pubDate ? post.updated_at : undefined;
-  const cover = post.cover_image_url || undefined;
+  const cover = resolveCoverUrl(post.cover_image_url);
 
   const lines: string[] = ['---'];
   lines.push(`title: '${escapeYaml(post.title)}'`);

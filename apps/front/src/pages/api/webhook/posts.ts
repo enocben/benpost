@@ -16,6 +16,20 @@ function escapeYaml(str: string): string {
   return str.replace(/'/g, "''");
 }
 
+function resolveCoverUrl(cover: string | null | undefined): string | undefined {
+  if (!cover) return undefined;
+  if (cover.startsWith('http://') || cover.startsWith('https://') || cover.startsWith('//')) return cover;
+  if (cover.startsWith('cover/')) {
+    // le back expose /files/cover/... — on reconstruit l'URL absolue si on connaît le back
+    // en prod le back envoie déjà l'URL absolue, ce fallback ne sert qu'en local mal configuré
+    const base = process.env.BACK_PUBLIC_URL || process.env.PUBLIC_API_URL || process.env.API_URL || '';
+    if (base) return `${base.replace(/\/$/, '')}/files/${cover}`;
+    // sinon on laisse la clé et le layout la résoudra côté front via PUBLIC_API_URL
+    return cover;
+  }
+  return cover;
+}
+
 function toMarkdown(post: {
   id: string;
   title: string;
@@ -35,7 +49,7 @@ function toMarkdown(post: {
   const description = post.excerpt || post.seo_description || post.title;
   const pubDate = post.published_at || post.created_at;
   const updatedDate = post.updated_at && post.updated_at !== pubDate ? post.updated_at : undefined;
-  const cover = post.cover_image_url || undefined;
+  const cover = resolveCoverUrl(post.cover_image_url);
 
   const lines: string[] = ['---'];
   lines.push(`title: '${escapeYaml(post.title)}'`);

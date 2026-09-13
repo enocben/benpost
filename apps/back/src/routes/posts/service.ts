@@ -15,6 +15,7 @@ export abstract class PostService {
         title: postSchema.title,
         slug: postSchema.slug,
         excerpt: postSchema.excerpt,
+        content: postSchema.content,
         cover_image_url: postSchema.cover_image_url,
         status: postSchema.status,
         author_id: postSchema.author_id,

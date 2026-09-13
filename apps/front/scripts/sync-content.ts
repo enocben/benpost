@@ -53,11 +53,21 @@ function escapeYaml(str: string): string {
   return str.replace(/'/g, "''");
 }
 
+function resolveCoverUrl(cover: string | null | undefined): string | undefined {
+  if (!cover) return undefined;
+  if (cover.startsWith('http://') || cover.startsWith('https://') || cover.startsWith('//')) return cover;
+  if (cover.startsWith('cover/')) {
+    // le back expose /files/cover/... — on construit l'URL absolue depuis l'API
+    return `${API_URL.replace(/\/$/, '')}/files/${cover}`;
+  }
+  return cover;
+}
+
 function toFrontmatter(post: PostRow): string {
   const description = post.excerpt || post.seo_description || post.title;
   const pubDate = post.published_at || post.created_at;
   const updatedDate = post.updated_at && post.updated_at !== pubDate ? post.updated_at : undefined;
-  const cover = post.cover_image_url || undefined;
+  const cover = resolveCoverUrl(post.cover_image_url);
 
   const lines: string[] = ['---'];
   lines.push(`title: '${escapeYaml(post.title)}'`);

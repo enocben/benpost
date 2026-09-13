@@ -8,7 +8,17 @@ import Header from '../components/Header.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, coverImageUrl } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, coverImageUrl: rawCoverImageUrl } = Astro.props;
+const coverImageUrl = (() => {
+  const c = rawCoverImageUrl as string | undefined;
+  if (!c) return undefined;
+  if (c.startsWith('http://') || c.startsWith('https://') || c.startsWith('//')) return c;
+  if (c.startsWith('cover/')) {
+    const base = (import.meta as any).env?.PUBLIC_API_URL || 'http://localhost:3002';
+    return `${base.replace(/\/$/, '')}/files/${c}`;
+  }
+  return c;
+})();
 ---
 
 <html lang="en">
