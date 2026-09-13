@@ -12,6 +12,7 @@ import type {
   PostInput,
   PostListItem,
   PostStatus,
+  PostUpdateInput,
   Role,
   Tag,
   User,
@@ -95,7 +96,8 @@ export function useCreatePost() {
 export function useUpdatePost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<PostInput> }) =>
+    // FormData quand une nouvelle image de couverture est envoyée, sinon JSON
+    mutationFn: ({ id, input }: { id: string; input: Partial<PostUpdateInput> | FormData }) =>
       api.put<Post>(`/posts/${id}`, input),
     onSuccess: async (post) => {
       await queryClient.invalidateQueries({ queryKey: keys.posts });

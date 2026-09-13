@@ -4,7 +4,7 @@ import { postSchema, userSchema, categorySchema } from "../../database/schema";
 import {eq} from "drizzle-orm";
 import { RouteResponse } from "../../utils/reponses";
 import { type PostModel } from './model'
-import {s3, S3Files} from "../../utils/s3";
+import {S3Files} from "../../utils/s3";
 
 export abstract class PostService {
   static async getAll() {
@@ -102,8 +102,27 @@ export abstract class PostService {
       }
     }
 
+    let coverImage: string | File | undefined = data.cover_image_url;
+
+    // Nouvelle image upload : on remplace l'ancienne, y compris dans le stockage
+    if (coverImage instanceof File) {
+      const posts = await db
+        .select({ cover_image_url: postSchema.cover_image_url })
+        .from(postSchema)
+        .where(eq(postSchema.id, id))
+        .limit(1);
+      const old = posts[0]?.cover_image_url;
+      // Les anciens posts peuvent référencer une URL externe : ne supprimer que nos clés S3
+      if (old && old.startsWith("cover/")) {
+        await S3Files.deleteCoverImage(old);
+      }
+      const image = await S3Files.uploadCoverImage(coverImage);
+      coverImage = image.name;
+    }
+
     const updateData = {
       ...data,
+      cover_image_url: coverImage,
       published_at: undefined as string | undefined,
       updated_at: new Date().toISOString(),
     };

@@ -63,3 +63,8 @@ export interface PostInput {
 export interface PostCreateInput extends Omit<PostInput, "cover_image_url"> {
   cover_image_url?: File;
 }
+
+// À la mise à jour, l'image peut être remplacée par un nouveau fichier
+export interface PostUpdateInput extends Omit<PostInput, "cover_image_url"> {
+  cover_image_url?: string | File;
+}

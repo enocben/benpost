@@ -56,6 +56,7 @@ import {
 import "@mdxeditor/editor/style.css";
 import {postSchema} from "@/lib/models";
 
+
 type PostForm = z.infer<typeof postSchema>;
 
 const emptyForm: PostForm = {
@@ -75,7 +76,7 @@ export default function PostEditorPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const markdownRef = useRef<MDXEditorMethods>(null)
-  const { theme } = useTheme();
+  const {theme} = useTheme();
 
   const {data: categories = []} = useCategories();
   const {data: post, isLoading} = usePost(id);
@@ -136,21 +137,36 @@ export default function PostEditorPage() {
       seo_description: values.seo_description || undefined,
     };
     if (isEdit && id) {
-      // L'édition conserve une URL d'image (l'API PUT accepte une string)
-      updatePost.mutate(
-        {
-          id,
-          input: {
-            ...rest,
-            ...optional,
-            cover_image_url:
-              typeof cover_image_url === "string" && cover_image_url
-                ? cover_image_url
-                : undefined,
+      if (cover_image_url instanceof FileList && cover_image_url.length > 0) {
+        // Nouvelle image : envoi en multipart, l'API remplace l'ancienne (y compris dans le stockage)
+        const form = new FormData();
+        for (const [key, value] of Object.entries({...rest, ...optional})) {
+          if (value !== undefined && value !== "") {
+            form.append(key, value as string);
+          }
+        }
+        form.append("cover_image_url", cover_image_url.item(0)!);
+        updatePost.mutate(
+          {id, input: form},
+          {onSuccess: () => navigate("/posts")}
+        );
+      } else {
+        // Pas de nouvelle image : JSON, l'image existante est conservée
+        updatePost.mutate(
+          {
+            id,
+            input: {
+              ...rest,
+              ...optional,
+              cover_image_url:
+                typeof cover_image_url === "string" && cover_image_url
+                  ? cover_image_url
+                  : undefined,
+            },
           },
-        },
-        {onSuccess: () => navigate("/posts")}
-      );
+          {onSuccess: () => navigate("/posts")}
+        );
+      }
     } else {
       // La création envoie l'image de couverture comme fichier (multipart)
       const coverFile =
@@ -168,7 +184,7 @@ export default function PostEditorPage() {
     e.preventDefault();
     // Synchroniser le contenu de l'éditeur vers le formulaire AVANT la validation
     const content = markdownRef.current?.getMarkdown() ?? "";
-    setValue("content", content, { shouldValidate: true, shouldDirty: true });
+    setValue("content", content, {shouldValidate: true, shouldDirty: true});
     // Déclencher la validation + soumission
     await handleSubmit(onSubmit)();
   }
@@ -178,6 +194,11 @@ export default function PostEditorPage() {
   // - édition : image stockée servie par /files/, ou URL externe
   const coverValue = watch("cover_image_url");
   const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  // Champ fichier caché, ouvert en cliquant sur l'image (ou le cadre pointillé)
+  const {ref: coverRegisterRef, ...coverRegisterRest} = register("cover_image_url");
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     if (coverValue instanceof FileList && coverValue.length > 0) {
       const url = URL.createObjectURL(coverValue.item(0)!);
@@ -238,131 +259,51 @@ export default function PostEditorPage() {
           </Button>
         </div>
 
-        {/* Image de couverture, affichée entre le titre et le contenu */}
-        {coverPreviewSrc && (
-          <img
-            src={coverPreviewSrc}
-            alt="Image de couverture de l'article"
-            className="max-h-[32rem] w-full rounded-xl object-contain"
-          />
-        )}
-        {isEdit ? (
-          <Input
-            id="cover_image_url"
-            placeholder="Image de couverture — collez une URL (https://…)"
-            className={`${borderless} text-muted-foreground focus-visible:text-foreground`}
-            {...register("cover_image_url")}
-          />
-        ) : (
-          <Input
-            id="cover_image_url"
-            type="file"
-            accept="image/*"
-            className={`${borderless} text-muted-foreground file:mr-3 file:border-0 file:bg-transparent file:text-sm file:text-muted-foreground file:shadow-none hover:file:text-foreground`}
-            {...register("cover_image_url")}
-          />
-        )}
 
-        {/* Panneau de propriétés, comme le frontmatter Obsidian */}
-        <div className="grid gap-x-6 gap-y-1 rounded-lg bg-muted/40 px-4 py-3 sm:grid-cols-2">
-          <div className="flex items-center gap-2">
-            <Label
-              htmlFor="slug"
-              className="w-20 shrink-0 text-xs text-muted-foreground"
-            >
-              Slug
-            </Label>
-            <Input
-              id="slug"
-              placeholder="mon-superbe-article"
-              className={`${borderless} text-sm`}
-              {...register("slug", {
-                onChange: () => {
-                  slugTouched.current = true;
-                },
-              })}
-            />
-          </div>
-          {errors.slug && (
-            <p className="text-destructive text-xs sm:col-span-2">
-              {errors.slug.message}
-            </p>
-          )}
-
-          <div className="flex items-center gap-2">
-            <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-              Statut
-            </Label>
-            <Select
-              value={watch("status")}
-              onValueChange={(value) =>
-                setValue("status", value as PostStatus, {
-                  shouldDirty: true,
-                })
-              }
-            >
-              <SelectTrigger
-                id="status"
-                className="h-8 w-full border-0 bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0"
-              >
-                <SelectValue/>
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(statusLabels) as PostStatus[]).map(
-                  (status) => (
-                    <SelectItem key={status} value={status}>
-                      {statusLabels[status]}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-              Catégorie
-            </Label>
-            <Select
-              value={watch("category_id") || "none"}
-              onValueChange={(value) =>
-                setValue("category_id", value === "none" ? "" : value, {
-                  shouldDirty: true,
-                })
-              }
-            >
-              <SelectTrigger
-                id="category"
-                className="h-8 w-full border-0 bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0"
-              >
-                <SelectValue placeholder="Sans catégorie"/>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sans catégorie</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Extrait */}
-        <Textarea
-          id="excerpt"
-          placeholder="Extrait — court résumé affiché dans les listes d'articles"
-          rows={2}
-          className="resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          {...register("excerpt")}
+        <input
+          id="cover_image_input"
+          type="file"
+          accept="image/*"
+          className="hidden"
+          ref={(el) => {
+            coverRegisterRef(el);
+            coverInputRef.current = el;
+          }}
+          {...coverRegisterRest}
         />
+        {coverPreviewSrc ? (
+          <button
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            className="group relative block w-full cursor-pointer overflow-hidden rounded-xl"
+            title="Cliquer pour changer l'image de couverture"
+          >
+            <img
+              src={coverPreviewSrc}
+              alt="Image de couverture de l'article"
+              className="max-h-128 w-full object-contain"
+            />
+            <span
+              className="absolute inset-0 hidden items-center justify-center bg-black/50 text-sm font-medium text-white group-hover:flex">
+              Changer l'image
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            className="flex h-40 w-full cursor-pointer items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground hover:bg-muted/40"
+          >
+            Cliquer pour ajouter une image de couverture
+          </button>
+        )}
+
 
         {/* Contenu */}
         <div>
           <MDXEditor
             markdown={post?.content || ""}
-            onChange={(markdown) => setValue("content", markdown, { shouldDirty: true, shouldValidate: true })}
+            onChange={(markdown) => setValue("content", markdown, {shouldDirty: true, shouldValidate: true})}
             plugins={[
               headingsPlugin(),
               listsPlugin(),
@@ -378,8 +319,8 @@ export default function PostEditorPage() {
                 },
                 imageAutocompleteSuggestions: ['https://picsum.photos/200/300', 'https://picsum.photos/200']
               }),
-              codeBlockPlugin({ defaultCodeBlockLanguage: "bash" }),
-              diffSourcePlugin({ viewMode: "rich-text" }),
+              codeBlockPlugin({defaultCodeBlockLanguage: "bash"}),
+              diffSourcePlugin({viewMode: "rich-text"}),
               toolbarPlugin({
                 toolbarClassName: 'toolbar',
                 toolbarPosition: 'top',
@@ -387,16 +328,16 @@ export default function PostEditorPage() {
                   <DiffSourceToggleWrapper>
                     <div className="flex flex-wrap gap-2 items-center">
                       <UndoRedo/>
-                      <div className="w-px h-4 bg-border mx-1" />
-                      <BlockTypeSelect />
+                      <div className="w-px h-4 bg-border mx-1"/>
+                      <BlockTypeSelect/>
                       <BoldItalicUnderlineToggles/>
-                      <div className="w-px h-4 bg-border mx-1" />
-                      <ListsToggle />
-                      <div className="w-px h-4 bg-border mx-1" />
-                      <CreateLink />
-                      <InsertImage />
-                      <InsertTable />
-                      <InsertCodeBlock />
+                      <div className="w-px h-4 bg-border mx-1"/>
+                      <ListsToggle/>
+                      <div className="w-px h-4 bg-border mx-1"/>
+                      <CreateLink/>
+                      <InsertImage/>
+                      <InsertTable/>
+                      <InsertCodeBlock/>
                     </div>
                   </DiffSourceToggleWrapper>
                 )
@@ -413,43 +354,130 @@ export default function PostEditorPage() {
           )}
         </div>
 
-        {/* SEO, replié par défaut */}
-        <details className="rounded-lg bg-muted/40 px-4 py-3">
-          <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground">
-            SEO
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="space-y-1">
+        <div className="flex flex-col gap-1.5">
+          {/* Panneau de propriétés, comme le frontmatter Obsidian */}
+          <div className="grid gap-x-1 gap-y-1 rounded-lg bg-muted/40 px-4 py-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2">
               <Label
-                htmlFor="seo_title"
-                className="text-xs text-muted-foreground"
+                htmlFor="slug"
+                className="w-16 shrink-0 text-xs text-muted-foreground"
               >
-                Titre SEO
+                Slug
               </Label>
               <Input
-                id="seo_title"
-                placeholder="Titre affiché dans les moteurs de recherche"
-                className={borderless}
-                {...register("seo_title")}
+                id="slug"
+                placeholder="mon-superbe-article"
+                className={`text-sm pl-2 pr-2`}
+                {...register("slug", {
+                  onChange: () => {
+                    slugTouched.current = true;
+                  },
+                })}
               />
             </div>
-            <div className="space-y-1">
-              <Label
-                htmlFor="seo_description"
-                className="text-xs text-muted-foreground"
-              >
-                Description SEO
+            {errors.slug && (
+              <p className="text-destructive text-xs sm:col-span-2">
+                {errors.slug.message}
+              </p>
+            )}
+
+            <div className="flex items-center">
+              <Label className="w-18 shrink-0 text-xs text-muted-foreground">
+                Statut
               </Label>
-              <Textarea
-                id="seo_description"
-                placeholder="Meta-description de l'article (≈ 160 caractères)"
-                rows={2}
-                className="resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                {...register("seo_description")}
-              />
+              <Select
+                value={watch("status")}
+                onValueChange={(value) =>
+                  setValue("status", value as PostStatus, {
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <SelectTrigger
+                  id="status"
+                  className="h-8 w-full border-0 bg-transparent pl-2 pr-2 shadow-none focus:ring-0"
+                >
+                  <SelectValue/>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(statusLabels) as PostStatus[]).map(
+                    (status) => (
+                      <SelectItem key={status} value={status}>
+                        {statusLabels[status]}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center">
+              <Label className="w-18 shrink-0 text-xs text-muted-foreground">
+                Catégorie
+              </Label>
+              <Select
+                value={watch("category_id") || "none"}
+                onValueChange={(value) =>
+                  setValue("category_id", value === "none" ? "" : value, {
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <SelectTrigger
+                  id="category"
+                  className="h-8 w-full border-0 bg-transparent pr-2 pl-2 shadow-none focus:ring-0"
+                >
+                  <SelectValue placeholder="Sans catégorie"/>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sans catégorie</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </details>
+
+          {/* SEO, replié par défaut */}
+          <details className="rounded-lg bg-muted/40 px-4 py-3">
+            <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground">
+              SEO
+            </summary>
+            <div className="mt-3 space-y-3">
+              <div className="space-y-1">
+                <Label
+                  htmlFor="seo_title"
+                  className="text-xs text-muted-foreground"
+                >
+                  Titre SEO
+                </Label>
+                <Input
+                  id="seo_title"
+                  placeholder="Titre affiché dans les moteurs de recherche"
+                  {...register("seo_title")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="seo_description"
+                  className="text-xs text-muted-foreground"
+                >
+                  Description SEO
+                </Label>
+                <Textarea
+                  id="seo_description"
+                  placeholder="Meta-description de l'article (≈ 160 caractères)"
+                  rows={2}
+                  className="resize-none border-0 bg-transparent pl-2 pr-2 shadow-none focus-visible:ring-2"
+                  {...register("seo_description")}
+                />
+              </div>
+            </div>
+          </details>
+        </div>
       </form>
     </div>
   );

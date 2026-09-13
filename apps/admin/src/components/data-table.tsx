@@ -58,7 +58,7 @@ export function DataTable<TData>({
                       <button
                         type="button"
                         onClick={() => header.column.toggleSorting()}
-                        className="-ml-2 inline-flex items-center gap-1 hover:text-foreground"
+                        className="-ml-2 inline-flex items-center pl-4 pr-4 gap-1 hover:text-foreground"
                       >
                         {flexRender(
                           header.column.columnDef.header,
@@ -110,9 +110,9 @@ export function DataTable<TData>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn(
+                    className={`${cn(
                       (cell.column.columnDef.meta as any)?.className
-                    )}
+                    )} pr-4 pl-4`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

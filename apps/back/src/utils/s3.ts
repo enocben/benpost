@@ -14,4 +14,12 @@ export abstract class S3Files{
     await file.write(img)
     return file
   }
+
+  static async deleteCoverImage(key: string) {
+    try{
+      await s3.file(key).delete()
+    } catch (e) {
+      console.error("Failed to delete file:", e)
+    }
+  }
 }
