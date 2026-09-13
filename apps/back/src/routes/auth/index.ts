@@ -9,7 +9,8 @@ export const authRoutes = new Elysia({
 })
   .use(jwt({
     name: 'jwt',
-    secret: process.env.APP_SECRET!
+    secret: process.env.APP_SECRET || (process.env.NODE_ENV === "test" ? "test-secret-do-not-use-in-prod" : undefined)!,
+    exp: "7d",
   }))
 
 authRoutes.post('register', ({body}) => AuthService.register(body), {body: AuthModel.register})

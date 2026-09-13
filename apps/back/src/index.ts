@@ -8,10 +8,19 @@ import { tagsRoutes } from "./routes/tags";
 import { usersRoutes } from "./routes/users";
 import { filesRoutes } from "./routes/files";
 
+if (!process.env.APP_SECRET && process.env.NODE_ENV !== "test") {
+  throw new Error("APP_SECRET manquant — définis APP_SECRET dans apps/back/.env");
+}
+
+const corsOrigins = (process.env.FRONT_URL ?? process.env.CORS_ORIGIN ?? "http://localhost:4321")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 export const app = new Elysia()
   .use(
     cors({
-      origin: ["http://localhost:4321"],
+      origin: corsOrigins,
     })
   )
   .use(openapi())

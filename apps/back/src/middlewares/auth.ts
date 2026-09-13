@@ -7,7 +7,8 @@ export const isAuthenticated = new Elysia()
   .use(
     jwt({
       name: "jwt",
-      secret: process.env.APP_SECRET!,
+      secret: process.env.APP_SECRET || (process.env.NODE_ENV === "test" ? "test-secret-do-not-use-in-prod" : undefined)!,
+      exp: "7d",
     })
   )
   .derive(async ({ jwt, headers: { authorization } }) => {

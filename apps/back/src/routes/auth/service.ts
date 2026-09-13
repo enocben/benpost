@@ -44,7 +44,7 @@ export abstract class AuthService {
         "Invalid email or password"
       )
 
-    const token = await jwt.sign({ id: user.id, role: user.role })
+    const token = await jwt.sign({ id: user.id, role: user.role, exp: Math.floor(Date.now()/1000) + 7*24*3600 })
     return status(200, RouteResponse.success('success', {token}))
   }
 

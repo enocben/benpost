@@ -69,13 +69,20 @@ function toMarkdown(post: {
 }
 
 export async function POST({ request }: { request: Request }) {
-  // Sécurité simple : token partagé via header X-Webhook-Secret
+  // Sécurité : WEBHOOK_SECRET obligatoire (fail-closed en prod, bypass seulement en dev sans secret)
   const expected = process.env.WEBHOOK_SECRET;
+  const isProd = process.env.NODE_ENV === "production";
+  if (!expected && isProd) {
+    return new Response(JSON.stringify({ success: false, message: 'Server misconfigured: WEBHOOK_SECRET required' }), { status: 500 });
+  }
   if (expected) {
     const got = request.headers.get('x-webhook-secret') || request.headers.get('authorization')?.replace('Bearer ', '');
     if (got !== expected) {
       return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), { status: 401 });
     }
+  } else if (isProd) {
+    // déjà géré ci-dessus, garde-fou
+    return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), { status: 401 });
   }
 
   let body: {
