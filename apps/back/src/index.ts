@@ -11,7 +11,7 @@ import { filesRoutes } from "./routes/files";
 export const app = new Elysia()
   .use(
     cors({
-      origin: ["http://localhost:3001", "http://localhost:4321"],
+      origin: ["http://localhost:4321"],
     })
   )
   .use(openapi())

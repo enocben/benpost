@@ -1,0 +1,14 @@
+---
+export const prerender = false;
+import AdminApp from "@/admin/AdminApp.tsx";
+---
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Benpost Admin</title>
+  </head>
+  <body>
+    <AdminApp client:only="react" />
+  </body>
+</html>
