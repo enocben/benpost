@@ -32,7 +32,7 @@ export default defineConfig({
 	},
 	env: {
 		schema: {
-			PUBLIC_API_URL: envField.string({ context: 'client', access: "public" }),
+			PUBLIC_API_URL: envField.string({ context: 'client', access: "public", default: "https://api-blog.benenoc.com" }),
 			HOST: envField.string({ context: "server", access: "public", default: "localhost" }),
 			PORT: envField.number({ context: "server", access: "public", default: 4321 }),
 			WEBHOOK_SECRET: envField.string({ context: "server", access: "secret" }),
