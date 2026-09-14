@@ -1,7 +1,7 @@
 import { clearSession, getToken } from "./auth";
+import { PUBLIC_API_URL } from 'astro:env/client';
 
-export const API_BASE =
-  (import.meta as any).env?.PUBLIC_API_URL ?? (import.meta as any).env?.API_URL ?? "http://localhost:3002";
+export const API_BASE = PUBLIC_API_URL;
 
 export class ApiError extends Error {
   status: number;

@@ -3,6 +3,7 @@ export const prerender = false;
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WEBHOOK_SECRET } from 'astro:env/server';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/pages/api/webhook/posts.ts -> src/content/blog
@@ -70,14 +71,13 @@ function toMarkdown(post: {
 
 export async function POST({ request }: { request: Request }) {
   // Sécurité : WEBHOOK_SECRET obligatoire (fail-closed en prod, bypass seulement en dev sans secret)
-  const expected = process.env.WEBHOOK_SECRET;
   const isProd = process.env.NODE_ENV === "production";
-  if (!expected && isProd) {
+  if (!WEBHOOK_SECRET && isProd) {
     return new Response(JSON.stringify({ success: false, message: 'Server misconfigured: WEBHOOK_SECRET required' }), { status: 500 });
   }
-  if (expected) {
+  if (WEBHOOK_SECRET) {
     const got = request.headers.get('x-webhook-secret') || request.headers.get('authorization')?.replace('Bearer ', '');
-    if (got !== expected) {
+    if (got !== WEBHOOK_SECRET) {
       return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), { status: 401 });
     }
   } else if (isProd) {
@@ -121,7 +121,7 @@ export async function POST({ request }: { request: Request }) {
       if (slug) {
         const filename = slugToFilename(slug);
         const dest = path.join(CONTENT_DIR, filename);
-        await unlink(dest).catch(() => {});
+        await unlink(dest).catch(() => { });
         return new Response(JSON.stringify({ success: true, message: `Deleted ${filename}` }), { status: 200 });
       }
       // fallback : scan par benpostId
@@ -132,7 +132,7 @@ export async function POST({ request }: { request: Request }) {
           const full = path.join(CONTENT_DIR, entry);
           const raw = await rf(full, 'utf-8').catch(() => '');
           if (raw.includes(`benpostId: '${id}'`)) {
-            await unlink(full).catch(() => {});
+            await unlink(full).catch(() => { });
             return new Response(JSON.stringify({ success: true, message: `Deleted ${entry}` }), { status: 200 });
           }
         }
@@ -146,7 +146,7 @@ export async function POST({ request }: { request: Request }) {
       if (post.status !== 'published') {
         const filename = slugToFilename(post.slug);
         const dest = path.join(CONTENT_DIR, filename);
-        await unlink(dest).catch(() => {});
+        await unlink(dest).catch(() => { });
         // aussi cleaner ancien slug si renommé
         // scan par id pour supprimer ancien slug
         const { readdir, readFile: rf } = await import('node:fs/promises');
@@ -155,7 +155,7 @@ export async function POST({ request }: { request: Request }) {
           const full = path.join(CONTENT_DIR, entry);
           const raw = await rf(full, 'utf-8').catch(() => '');
           if (raw.includes(`benpostId: '${post.id}'`) && entry !== filename) {
-            await unlink(full).catch(() => {});
+            await unlink(full).catch(() => { });
           }
         }
         return new Response(JSON.stringify({ success: true, message: 'Depublished' }), { status: 200 });
@@ -174,7 +174,7 @@ export async function POST({ request }: { request: Request }) {
         const full = path.join(CONTENT_DIR, entry);
         const raw = await rf(full, 'utf-8').catch(() => '');
         if (raw.includes(`benpostId: '${post.id}'`)) {
-          await unlink(full).catch(() => {});
+          await unlink(full).catch(() => { });
         }
       }
 

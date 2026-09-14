@@ -7,7 +7,7 @@ import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig, fontProviders, envField } from 'astro/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +29,14 @@ export default defineConfig({
 				protocol: 'https',
 			}
 		],
+	},
+	env: {
+		schema: {
+			PUBLIC_API_URL: envField.string({ context: 'client', access: "public" }),
+			HOST: envField.string({ context: "server", access: "public", default: "localhost" }),
+			PORT: envField.number({ context: "server", access: "public", default: 4321 }),
+			WEBHOOK_SECRET: envField.string({ context: "server", access: "secret" }),
+		}
 	},
 	vite: {
 		plugins: [tailwindcss()],
