@@ -1,10 +1,9 @@
-import {status, type Handler} from "elysia";
-import type {AuthModel} from "./model";
-import {db} from "../../database/db";
-import {userSchema} from "../../database/schema";
-import {eq} from "drizzle-orm";
-import {RouteResponse} from "../../utils/reponses";
-import { jwt } from "@elysiajs/jwt";
+import { status, type Handler } from "elysia";
+import type { AuthModel } from "./model";
+import { db } from "../../database/db";
+import { userSchema } from "../../database/schema";
+import { eq } from "drizzle-orm";
+import { RouteResponse } from "../../utils/reponses";
 
 
 export abstract class AuthService {
@@ -28,7 +27,7 @@ export abstract class AuthService {
     return status(200, RouteResponse.success('Account created successfully'))
   }
 
-  static  async login(data: AuthModel['login'], jwt: any) {
+  static async login(data: AuthModel['login'], jwt: any) {
     const users = await db.select().from(userSchema).where(eq(userSchema.email, data.email)).limit(1)
     if (users.length === 0)
       throw status(
@@ -44,8 +43,8 @@ export abstract class AuthService {
         "Invalid email or password"
       )
 
-    const token = await jwt.sign({ id: user.id, role: user.role, exp: Math.floor(Date.now()/1000) + 7*24*3600 })
-    return status(200, RouteResponse.success('success', {token}))
+    const token = await jwt.sign({ id: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 3600 })
+    return status(200, RouteResponse.success('success', { token }))
   }
 
 }
