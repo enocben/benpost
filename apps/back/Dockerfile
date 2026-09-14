@@ -8,7 +8,7 @@ COPY apps/back/package.json ./apps/back/package.json
 COPY apps/front/package.json ./apps/front/package.json
 
 # Installer uniquement deps du back (mais Bun installe workspaces, cache optimisé)
-RUN bun install --frozen-lockfile 2>&1 | tail -20
+RUN bun install -p --frozen-lockfile 2>&1 | tail -20
 
 # Copier code du back
 COPY apps/back ./apps/back
