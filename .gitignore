@@ -41,3 +41,4 @@ apps/back/.env
 apps/back/src/database/sqlite.db
 apps/back/src/database/*.db
 apps/back/src/database/*.sqlite
+apps/back/src/database/sqlite.*

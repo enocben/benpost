@@ -1,7 +1,10 @@
 import { Elysia, status } from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import * as process from "node:process";
-import {getToken} from "../utils";
+import { getToken } from "../utils";
+import { db } from "../database/db";
+import { userSchema } from "../database/schema";
+import { eq } from "drizzle-orm";
 
 export const isAuthenticated = new Elysia()
   .use(

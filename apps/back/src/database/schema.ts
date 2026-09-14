@@ -1,5 +1,5 @@
 import { sqliteTable, text, primaryKey } from "drizzle-orm/sqlite-core";
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 
 export const userSchema = sqliteTable("users", {
   id: text().primaryKey(), // uuid
