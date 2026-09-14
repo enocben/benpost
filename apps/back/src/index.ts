@@ -15,6 +15,18 @@ if (!process.env.APP_SECRET && process.env.NODE_ENV !== "test") {
   throw new Error("APP_SECRET manquant — définis APP_SECRET dans apps/back/.env");
 }
 
+if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+  throw new Error(
+    "ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment variables",
+  );
+}
+
+if (!process.env.FRONT_WEBHOOK_URL || !process.env.WEBHOOK_SECRET) {
+  throw new Error(
+    "FRONT_WEBHOOK_URL and WEBHOOK_SECRET must be set in the environment variables",
+  );
+}
+
 const corsOrigins = (process.env.FRONT_URL ?? process.env.CORS_ORIGIN ?? "http://localhost:4321")
   .split(",")
   .map((s) => s.trim())
