@@ -37,8 +37,12 @@ apps/back/.env
 
 *.sqlite
 *.db
+*.db-wal
+*.db-shm
 # benpost local db
 apps/back/src/database/sqlite.db
 apps/back/src/database/*.db
 apps/back/src/database/*.sqlite
 apps/back/src/database/sqlite.*
+database.db
+database.db-*
