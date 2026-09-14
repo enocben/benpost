@@ -36,7 +36,7 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4321
-      PUBLIC_API_URL: https://api.blog.benenoc.com
+      PUBLIC_API_URL: ${PUBLIC_API_URL}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET}
     depends_on:
       - back

@@ -17,6 +17,19 @@ export default defineConfig({
 	output: 'server',
 	adapter: node({ mode: 'standalone' }),
 	integrations: [mdx(), sitemap(), react()],
+	security: {
+		checkOrigin: true,
+		allowedDomains: [
+			{
+				hostname: 'blog.benenoc.com',
+				protocol: 'https',
+			},
+			{
+				hostname: 'api-blog.benenoc.com',
+				protocol: 'https',
+			}
+		],
+	},
 	vite: {
 		plugins: [tailwindcss()],
 		resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
