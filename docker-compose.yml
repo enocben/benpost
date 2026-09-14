@@ -13,6 +13,8 @@ services:
       FRONT_WEBHOOK_URL: https://blog.benenoc.com/api/webhook/posts
       FRONT_URL: https://blog.benenoc.com
       CORS_ORIGIN: https://blog.benenoc.com
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       # ——— LibSQL / Turso ——— (prod)
       TURSO_DATABASE_URL: ${TURSO_DATABASE_URL}
       TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN}
