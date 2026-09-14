@@ -4,7 +4,7 @@
 // - local dev : file:./sqlite.db (libsql local file, pas de volume Docker nécessaire en prod)
 
 import path from "node:path";
-import { createClient } from "@tursodatabase/api"
+import { createClient } from "@libsql/client";
 
 const isTest = process.env.NODE_ENV === "test";
 const tursoUrl =
@@ -30,11 +30,11 @@ if (isTest) {
   db = drizzle(sqlite);
   migrate(db, { migrationsFolder: path.resolve(import.meta.dir, "./migrations") });
 } else if (tursoUrl && tursoToken) {
-  // Prod / LibSQL (Turso ou file:)
+  // Prod / Turso distant (Hrana) — drizzle attend { connection } ou un client explicite
   const { drizzle } = await import("drizzle-orm/libsql");
   client = createClient({
-    baseUrl: tursoUrl,
-    token: tursoToken,
+    url: tursoUrl,
+    authToken: tursoToken,
   });
   db = drizzle(client);
   // migrate libsql — idempotent
@@ -50,7 +50,7 @@ if (isTest) {
   const localPath = path.resolve(import.meta.dir, "./sqlite.db");
   const url = `file:${localPath}`;
   console.log(`[db] no TURSO_DATABASE_URL, using local ${url}`);
-  client = createClient({ baseUrl: url, token: "" });
+  client = createClient({ url });
   db = drizzle(client);
   try {
     const { migrate } = await import("drizzle-orm/libsql/migrator");
