@@ -10,7 +10,7 @@ services:
       PORT: 3000
       APP_SECRET: ${APP_SECRET}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET}
-      FRONT_WEBHOOK_URL: https://blog.benenoc.com/api/webhook/posts
+      FRONT_WEBHOOK_URL: ${FRONT_WEBHOOK_URL}
       FRONT_URL: https://blog.benenoc.com
       CORS_ORIGIN: https://blog.benenoc.com
       ADMIN_EMAIL: ${ADMIN_EMAIL}
