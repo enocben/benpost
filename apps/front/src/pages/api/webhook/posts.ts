@@ -7,7 +7,7 @@ import { WEBHOOK_SECRET } from 'astro:env/server';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/pages/api/webhook/posts.ts -> src/content/blog
-const CONTENT_DIR = path.resolve(__dirname, '../../../content/blog');
+const CONTENT_DIR = path.resolve(__dirname, '../../../content');
 
 function slugToFilename(slug: string): string {
   return slug.replace(/[^a-z0-9-]/gi, '-').toLowerCase() + '.md';
