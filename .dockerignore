@@ -1,0 +1,15 @@
+.dockerignore — Benpost
+node_modules
+dist
+.build
+apps/back/src/database/sqlite.db
+apps/back/src/database/sqlite.db-*
+apps/front/dist
+apps/front/.astro
+apps/front/src/content/blog/*.md
+!apps/front/src/content/blog/first-post.md
+.git
+.github
+docs
+*.log
+.env
