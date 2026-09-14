@@ -4,6 +4,7 @@
 // - local dev : file:./sqlite.db (libsql local file, pas de volume Docker nécessaire en prod)
 
 import path from "node:path";
+// @ts-ignore
 import { createClient } from "@libsql/client";
 
 const isTest = process.env.NODE_ENV === "test";
@@ -26,7 +27,8 @@ if (isTest) {
   const { migrate } = await import("drizzle-orm/bun-sqlite/migrator");
   const { Database } = await import("bun:sqlite");
   const sqlite = new Database(":memory:");
-  try { sqlite.exec("PRAGMA journal_mode=WAL;"); } catch { }
+  try { sqlite.run("PRAGMA journal_mode=WAL;"); } catch { }
+  // @ts-ignore
   db = drizzle(sqlite);
   migrate(db, { migrationsFolder: path.resolve(import.meta.dir, "./migrations") });
 } else if (tursoUrl && tursoToken) {

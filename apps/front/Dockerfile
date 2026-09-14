@@ -25,12 +25,12 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4321
 
-COPY --from=builder /app/apps/front/dist ./dist
-COPY --from=builder /app/apps/front/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/front/node_modules ./apps/front/node_modules
+COPY --from=builder /app/apps/front/dist ./apps/front/dist
+COPY --from=builder /app/apps/front/package.json ./apps/front/package.json
 
-# Astro standalone n'a besoin que de dist/, mais on garde un node_modules minimal pour sharp si inclus
-# Si build statique échoue sur sharp, décommenter:
-# COPY --from=builder /app/node_modules ./node_modules
+WORKDIR /app/apps/front
 
 EXPOSE 4321
 CMD ["node", "dist/server/entry.mjs"]
