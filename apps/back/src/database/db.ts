@@ -9,15 +9,9 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 const isTest = process.env.NODE_ENV === "test";
-const tursoUrl =
-  process.env.TURSO_DATABASE_URL ??
-  process.env.LIBSQL_URL ??
-  process.env.DATABASE_URL;
+const tursoUrl = process.env.TURSO_DATABASE_URL;
 
-const tursoToken =
-  process.env.TURSO_AUTH_TOKEN ??
-  process.env.LIBSQL_AUTH_TOKEN ??
-  process.env.DATABASE_AUTH_TOKEN;
+const tursoToken = process.env.TURSO_AUTH_TOKEN;
 
 let db: any;
 let client: any;
