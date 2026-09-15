@@ -1,24 +1,30 @@
-FROM oven/bun:1.4.2 AS build
+FROM oven/bun AS build
 
 WORKDIR /app
 
-# Cache packages installation — le back est déployé indépendamment du workspace.
+# Cache packages installation — manifests du back seul (pas de bun.lock dédié)
 COPY ./apps/back/package.json package.json
 
-RUN bun install --production
+RUN bun install
 
 COPY ./apps/back/src ./src
 
-FROM oven/bun:1.4.2-slim
+ENV NODE_ENV=production
+
+RUN bun build \
+	--minify-whitespace \
+	--minify-syntax \
+	--outfile server \
+	src/index.ts
+
+FROM gcr.io/distroless/base
 
 WORKDIR /app
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/src ./src
+COPY --from=build /app/server server
 
 ENV NODE_ENV=production
 
-CMD ["bun", "run", "src/index.ts"]
+CMD ["./server"]
 
 EXPOSE 3000
