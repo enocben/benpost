@@ -1,0 +1,3 @@
+main = "src/index.ts"
+name = "benpost-back"
+compatibility_date = "2025-06-01"
