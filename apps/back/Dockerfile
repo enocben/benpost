@@ -19,6 +19,6 @@ COPY --from=build /app/src ./src
 
 ENV NODE_ENV=production
 
-CMD ["bun", "run", "src/index.ts"]
+CMD ["bun", "run", "src/server.ts"]
 
 EXPOSE 3000
