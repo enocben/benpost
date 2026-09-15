@@ -8,6 +8,8 @@ import path from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
+console.log(import.meta?.env)
+
 const isTest = process.env.NODE_ENV === "test";
 const tursoUrl = process.env.TURSO_DATABASE_URL;
 
