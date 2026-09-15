@@ -3,12 +3,12 @@ FROM oven/bun AS build
 WORKDIR /app
 
 # Cache packages installation
-COPY package.json package.json
-COPY bun.lock bun.lock
+COPY ./apps/back/package.json package.json
+COPY ./apps/back/bun.lock bun.lock
 
 RUN bun install
 
-COPY ./src ./src
+COPY ./apps/back/src ./src
 
 ENV NODE_ENV=production
 
@@ -17,7 +17,7 @@ RUN bun build \
 	--minify-whitespace \
 	--minify-syntax \
 	--outfile server \
-	src/index.ts
+	./apps/back/src/index.ts
 
 FROM gcr.io/distroless/base
 
