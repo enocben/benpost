@@ -10,7 +10,6 @@ import { filesRoutes } from "./routes/files";
 import { db } from "./database/db";
 import { userSchema } from "./database/schema";
 import { eq } from "drizzle-orm";
-import { CloudflareAdapter } from 'elysia/adapter/cloudflare-worker'
 
 if (!process.env.APP_SECRET && process.env.NODE_ENV !== "test") {
   throw new Error("APP_SECRET manquant — définis APP_SECRET dans apps/back/.env");
@@ -33,9 +32,7 @@ const corsOrigins = (process.env.FRONT_URL ?? process.env.CORS_ORIGIN ?? "http:/
   .map((s) => s.trim())
   .filter(Boolean);
 
-export const app = new Elysia({
-  adapter: CloudflareAdapter
-})
+export const app = new Elysia()
   .use(
     cors({
       origin: corsOrigins,
@@ -96,8 +93,7 @@ export const app = new Elysia({
         .where(eq(userSchema.id, user.id));
     }
   })
-  .get("/", () => "Hello Benpost API")
-  .compile();
+  .get("/", () => "Hello Benpost API");
 
 if (import.meta.main) {
   const port = Number(process.env.PORT ?? process.env.BACK_PORT ?? 3000);
