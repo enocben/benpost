@@ -6,7 +6,6 @@
 import path from "node:path";
 // @ts-ignore
 import { createClient } from "@libsql/client";
-import { Database } from "bun:sqlite";
 
 const isTest = process.env.NODE_ENV === "test";
 const tursoUrl =
@@ -26,6 +25,7 @@ if (isTest) {
   // Tests -> bun:sqlite :memory: (rapide, isolé)
   const { drizzle } = await import("drizzle-orm/bun-sqlite");
   const { migrate } = await import("drizzle-orm/bun-sqlite/migrator");
+  const { Database } = await import("bun:sqlite");
   const sqlite = new Database(":memory:");
   try { sqlite.run("PRAGMA journal_mode=WAL;"); } catch { }
   // @ts-ignore
