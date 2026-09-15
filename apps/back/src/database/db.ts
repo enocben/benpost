@@ -16,13 +16,13 @@ const tursoToken = process.env.TURSO_AUTH_TOKEN;
 let db: any;
 let client: any;
 
-if (!tursoUrl && !tursoToken) {
+if (!tursoUrl || !tursoToken) {
   throw new Error("[db] no TURSO_DATABASE_URL or TURSO_AUTH_TOKEN, set env vars or use local sqlite.db"
   );
 }
 
 client = createClient({
-  url: tursoUrl as string,
+  url: tursoUrl,
   authToken: tursoToken,
 });
 db = drizzle(client);
