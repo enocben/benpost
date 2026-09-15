@@ -2,13 +2,12 @@ FROM oven/bun AS build
 
 WORKDIR /app
 
-# Cache packages installation
+# Cache packages installation — manifests du back seul (pas de bun.lock dédié)
 COPY package.json package.json
-COPY bun.lock bun.lock
 
 RUN bun install
 
-COPY ./src ./src
+COPY ./apps/back/src ./src
 
 ENV NODE_ENV=production
 
