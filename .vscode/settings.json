@@ -5,9 +5,23 @@
         "**/.hg": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
-        "apps/back/node_modules": true
+        "apps/back/node_modules": true,
+        "apps/front/node_modules": true,
+        "apps/front/.astro": true,
+        "apps/front/.vscode": true,
+        ".vscode": true,
+        ".idea": true,
+        ".zcode": true,
+        ".agents": true
     },
     "hide-files.files": [
-        "apps/back/node_modules"
+        "apps/back/node_modules",
+        "apps/front/node_modules",
+        "apps/front/.astro",
+        "apps/front/.vscode",
+        ".vscode",
+        ".idea",
+        ".zcode",
+        ".agents"
     ]
 }
