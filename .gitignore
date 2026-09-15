@@ -46,3 +46,7 @@ apps/back/src/database/*.sqlite
 apps/back/src/database/sqlite.*
 database.db
 database.db-*
+
+# wrangler local
+.wrangler
+apps/front/.wrangler/

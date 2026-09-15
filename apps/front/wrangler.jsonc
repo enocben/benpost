@@ -1,0 +1,25 @@
+{
+  // Benpost front — Astro SSR sur Cloudflare Workers.
+  // PUBLIC_API_URL est inlinée au build (astro build) : changer l'URL => rebuild + redeploy.
+  // WEBHOOK_SECRET est un secret Worker (jamais en clair ici) : `wrangler secret put WEBHOOK_SECRET`.
+  "name": "benpost-front",
+  "main": "./dist/server/entry.mjs",
+  "compatibility_date": "2026-09-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "none"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "ce6d9f42ea534703bdd18f796bdbd0f1"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "blog.benenoc.com/*",
+      "zone_name": "benenoc.com"
+    }
+  ]
+}

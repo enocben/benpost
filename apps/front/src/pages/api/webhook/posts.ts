@@ -1,13 +1,21 @@
 export const prerender = false;
 
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WEBHOOK_SECRET } from 'astro:env/server';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// src/pages/api/webhook/posts.ts -> src/content/blog
-const CONTENT_DIR = path.resolve(__dirname, '../../../content/blog');
+function getContentDir(): string {
+  // En Workers (Cloudflare) import.meta.dirname n'existe pas et le FS est éphémère :
+  // on lève pour basculer en mode "accepted" (appliqué au prochain build via sync:content).
+  try {
+    const dir = path.dirname(fileURLToPath(import.meta.url));
+    const resolved = path.resolve(dir, '../../../content/blog');
+    if (!resolved || resolved === '/' || resolved === '.') throw new Error('CONTENT_DIR unavailable');
+    return resolved;
+  } catch {
+    throw new Error('CONTENT_DIR_NOT_AVAILABLE_IN_WORKERS');
+  }
+}
 
 function slugToFilename(slug: string): string {
   return slug.replace(/[^a-z0-9-]/gi, '-').toLowerCase() + '.md';
@@ -111,28 +119,40 @@ export async function POST({ request }: { request: Request }) {
     return new Response(JSON.stringify({ success: false, message: 'Invalid JSON' }), { status: 400 });
   }
 
+  let CONTENT_DIR: string;
+  let fs: typeof import('node:fs/promises');
   try {
-    await mkdir(CONTENT_DIR, { recursive: true });
-
+    CONTENT_DIR = getContentDir();
+    fs = await import('node:fs/promises');
+    await fs.mkdir(CONTENT_DIR, { recursive: true });
+  } catch {
+    // Workers : pas de FS persistant — on accepte et le contenu sera appliqué
+    // au prochain build via `sync:content` (prebuild).
+    if (body.action === 'upsert' || body.action === 'delete') {
+      return new Response(JSON.stringify({ success: true, message: 'Accepted (applied at next build)' }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ success: false, message: 'Invalid action' }), { status: 400 });
+  }
+  try {
     if (body.action === 'delete') {
       const slug = body.slug || '';
       const id = body.id || '';
       // supprime par slug
       if (slug) {
         const filename = slugToFilename(slug);
-        const dest = path.join(CONTENT_DIR, filename);
-        await unlink(dest).catch(() => { });
+        const dest = path.join(CONTENT_DIR!, filename);
+        await fs!.unlink(dest).catch(() => { });
         return new Response(JSON.stringify({ success: true, message: `Deleted ${filename}` }), { status: 200 });
       }
       // fallback : scan par benpostId
       if (id) {
-        const { readdir, readFile: rf } = await import('node:fs/promises');
-        const entries = await readdir(CONTENT_DIR);
+        const { readdir, readFile: rf } = fs!;
+        const entries = await readdir(CONTENT_DIR!);
         for (const entry of entries) {
-          const full = path.join(CONTENT_DIR, entry);
+          const full = path.join(CONTENT_DIR!, entry);
           const raw = await rf(full, 'utf-8').catch(() => '');
           if (raw.includes(`benpostId: '${id}'`)) {
-            await unlink(full).catch(() => { });
+            await fs!.unlink(full).catch(() => { });
             return new Response(JSON.stringify({ success: true, message: `Deleted ${entry}` }), { status: 200 });
           }
         }
@@ -145,37 +165,37 @@ export async function POST({ request }: { request: Request }) {
       // Si status != published, on supprime le fichier (dépublié)
       if (post.status !== 'published') {
         const filename = slugToFilename(post.slug);
-        const dest = path.join(CONTENT_DIR, filename);
-        await unlink(dest).catch(() => { });
+        const dest = path.join(CONTENT_DIR!, filename);
+        await fs!.unlink(dest).catch(() => { });
         // aussi cleaner ancien slug si renommé
         // scan par id pour supprimer ancien slug
-        const { readdir, readFile: rf } = await import('node:fs/promises');
-        const entries = await readdir(CONTENT_DIR);
+        const { readdir, readFile: rf } = fs!;
+        const entries = await readdir(CONTENT_DIR!);
         for (const entry of entries) {
-          const full = path.join(CONTENT_DIR, entry);
+          const full = path.join(CONTENT_DIR!, entry);
           const raw = await rf(full, 'utf-8').catch(() => '');
           if (raw.includes(`benpostId: '${post.id}'`) && entry !== filename) {
-            await unlink(full).catch(() => { });
+            await fs!.unlink(full).catch(() => { });
           }
         }
         return new Response(JSON.stringify({ success: true, message: 'Depublished' }), { status: 200 });
       }
 
       const filename = slugToFilename(post.slug);
-      const dest = path.join(CONTENT_DIR, filename);
+      const dest = path.join(CONTENT_DIR!, filename);
       const md = toMarkdown(post as any);
 
-      await writeFile(dest, md, 'utf-8');
+      await fs!.writeFile(dest, md, 'utf-8');
 
       // si slug a changé, supprimer ancien fichier avec même benpostId
-      const { readdir, readFile: rf } = await import('node:fs/promises');
-      const entries = await readdir(CONTENT_DIR);
+      const { readdir, readFile: rf } = fs!;
+      const entries = await readdir(CONTENT_DIR!);
       for (const entry of entries) {
         if (entry === filename) continue;
-        const full = path.join(CONTENT_DIR, entry);
+        const full = path.join(CONTENT_DIR!, entry);
         const raw = await rf(full, 'utf-8').catch(() => '');
         if (raw.includes(`benpostId: '${post.id}'`)) {
-          await unlink(full).catch(() => { });
+          await fs!.unlink(full).catch(() => { });
         }
       }
 

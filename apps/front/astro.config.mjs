@@ -3,7 +3,7 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react'
-import node from '@astrojs/node';
+import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
 	site: 'https://blog.benenoc.com',
 	output: 'server',
-	adapter: node({ mode: 'standalone' }),
+	adapter: cloudflare({ imageService: "cloudflare" }),
 	integrations: [mdx(), sitemap(), react()],
 	security: {
 		checkOrigin: true,
