@@ -1,6 +1,6 @@
 export const prerender = false;
 
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WEBHOOK_SECRET } from 'astro:env/server';
@@ -164,6 +164,7 @@ export async function POST({ request }: { request: Request }) {
       const filename = slugToFilename(post.slug);
       const dest = path.join(CONTENT_DIR, filename);
       const md = toMarkdown(post as any);
+
       await writeFile(dest, md, 'utf-8');
 
       // si slug a changé, supprimer ancien fichier avec même benpostId
