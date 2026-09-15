@@ -3,7 +3,7 @@ FROM oven/bun AS build
 WORKDIR /app
 
 # Cache packages installation — manifests du back seul (pas de bun.lock dédié)
-COPY ./apps/backpackage.json package.json
+COPY ./apps/back/package.json package.json
 
 RUN bun install
 
